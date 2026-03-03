@@ -1,0 +1,1 @@
+id, full_name, email, password, role, phone, avatar, is_active, last_login, password_changed_at, reset_password_token, reset_password_expires, created_at, updated_at
