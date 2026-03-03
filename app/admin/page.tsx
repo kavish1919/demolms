@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { StatsCard } from '@/components/admin/stats-card';
 import { RevenueChart, EnrollmentChart, CourseDistribution } from '@/components/admin/dashboard-charts';
@@ -37,6 +38,15 @@ const courseDistributionData = [
 export default function AdminDashboard() {
   const stats = mockDashboardStats;
 
+  const [dbStats, setDbStats] = useState({ totalStudents: 0, totalTrainers: 0, totalUsers: 0, activeUsers: 0, recentSignups: 0 });
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setDbStats(d.stats); })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen">
       <AdminHeader
@@ -49,19 +59,19 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Students"
-            value={stats.totalStudents}
+            value={dbStats.totalStudents}
             icon={Users}
             trend={{ value: 12, isPositive: true }}
-            subtitle="vs last month"
+            subtitle="from database"
             iconColor="text-primary"
             iconBgColor="bg-primary/10"
           />
           <StatsCard
             title="Total Trainers"
-            value={stats.totalTrainers}
+            value={dbStats.totalTrainers}
             icon={GraduationCap}
             trend={{ value: 8, isPositive: true }}
-            subtitle="vs last month"
+            subtitle="from database"
             iconColor="text-chart-2"
             iconBgColor="bg-chart-2/10"
           />

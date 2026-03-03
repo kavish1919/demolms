@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -11,12 +11,33 @@ import { ThemeProvider } from '@/components/theme-provider';
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, isLoading, hasRole } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isTrainerArea = pathname.startsWith('/admin/trainers');
 
   useEffect(() => {
-    if (!isLoading && (!user || !hasRole('admin'))) {
-      router.push('/login');
+    if (isLoading) return;
+
+    if (!user) {
+      router.replace('/login');
+      return;
     }
-  }, [user, isLoading, hasRole, router]);
+
+    if (hasRole('admin')) {
+      return;
+    }
+
+    if (hasRole('trainer') && isTrainerArea) {
+      return;
+    }
+
+    if (hasRole('trainer')) {
+      router.replace('/trainer');
+      return;
+    }
+
+    router.replace('/login');
+  }, [user, isLoading, hasRole, router, pathname, isTrainerArea]);
 
   if (isLoading) {
     return (
@@ -29,7 +50,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || !hasRole('admin')) {
+  if (!user) {
+    return null;
+  }
+
+  const canAccessAdmin = hasRole('admin') || (hasRole('trainer') && isTrainerArea);
+
+  if (!canAccessAdmin) {
     return null;
   }
 

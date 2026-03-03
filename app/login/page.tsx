@@ -23,16 +23,33 @@ function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
 
+
+  const [notPermitted, setNotPermitted] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotPermitted(false);
     setIsLoading(true);
 
     const result = await login(email, password);
 
     if (result.success) {
-      // Redirect based on role
-      router.push('/admin');
+      const stored = localStorage.getItem('lms_user');
+      const parsed = stored ? JSON.parse(stored) : null;
+      const role = parsed?.role;
+
+      if (role === 'admin') {
+        router.push('/admin');
+      } else if (role === 'student') {
+        router.push('/student');
+      } else if (role === 'trainer') {
+        router.push('/trainer');
+      } else {
+        router.push('/');
+      }
+    } else if (result.error === 'not_permitted') {
+      setNotPermitted(true);
     } else {
       setError(result.error || 'Login failed');
     }
@@ -62,7 +79,16 @@ function LoginForm() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
+
+              {notPermitted ? (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <b>Not yet permitted:</b> Your account is pending admin approval.<br />
+                    Please wait for admin to activate your access. You will be able to login once permitted.
+                  </AlertDescription>
+                </Alert>
+              ) : error && (
                 <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
@@ -179,16 +205,7 @@ function LoginForm() {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
-              <p className="text-sm font-medium text-foreground mb-2">Demo Credentials:</p>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p><span className="font-medium">Admin:</span> admin@codevocado.in</p>
-                <p><span className="font-medium">Student:</span> rahul.sharma@example.com</p>
-                <p><span className="font-medium">Trainer:</span> amit.kumar@example.com</p>
-                <p className="text-xs mt-2">(Any password works for demo)</p>
-              </div>
-            </div>
+            {/* Demo credentials intentionally removed while production auth is enabled */}
           </CardContent>
         </Card>
 
